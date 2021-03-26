@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+""" CLI to selectively clone a single branch
+"""
+import os
+import json
+import logging
+import subprocess
+
+logger = logging.getLogger('GCBO')
+logging.basicConfig(level=logging.DEBUG)
+
+CFG=os.path.join(os.getenv("HOME"), '.gcbo.json')
+
+def read_cfg() -> list:
+    """ config reader"""
+    # logger.debug(f"reading cfg {CFG}")
+    try:
+        with open(CFG) as cfg:
+            repos = json.load(cfg)
+            return repos
+
+    except FileNotFoundError:
+        logger.debug("No repos configured yet. Exiting")
+        exit(0)
+
+def browse_repos(repos: list) -> str:
+    """CLI to select and browse repos"""
+    menu_items = list(repos.keys())
+    idx = menu("Select repo to browse", menu_items)
+    return repos[menu_items[idx]]["url"]
+
+def list_branches(repo: str) -> str:
+    """List all branches of a remote repo"""
+
+    branches = []
+    cmd = f"git ls-remote -h {repo}"
+    refs = os.popen(cmd).readlines()
+    for ref in refs:
+        branches.append(ref.split("/")[2].strip())
+
+    idx = menu("Select branch to clone", branches)
+    return branches[idx]
+
+def get_dir() -> str:
+    """Query for dir to clone to"""
+    clone_dir = input("Enter dir name to clone to: ")
+    if not clone_dir.startswith("~/"):
+        target = os.path.join(os.getcwd(), clone_dir)
+    elif clone_dir.startswith("~/"):
+        target = os.path.expanduser(clone_dir)
+    else:
+        target = clone_dir
+
+    return target
+
+def menu(title: str, options: list) -> str:
+    """Simple menu"""
+    s = f"{title}\n"
+    for idx, option in enumerate(options):
+        s += f"{idx} : {option}\n"
+
+    print(s)
+
+    choice = None
+    while choice is None or choice not in range(len(options)):
+        choice = int(input("Please make a choice: "))
+
+    return choice
+
+def main() -> None:
+    """main wrapper"""
+    repos = read_cfg()
+    repo = browse_repos(repos)
+    branch = list_branches(repo)
+    target = get_dir()
+    logger.debug(f"Will clone branch {branch} from {repo} to {target}")
+
+    # clone in subprocess
+    cmd = ["git", "clone", "-b", branch, "--single-branch", repo, target]
+    p = subprocess.Popen(cmd)
+    logger.info("Cloning.....")
+    res = p.communicate()
+
+
+
+if __name__ == '__main__':
+    main()

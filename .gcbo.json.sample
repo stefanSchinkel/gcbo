@@ -1,0 +1,10 @@
+{
+    "Gantt": {
+        "url": "https://github.com/stefanSchinkel/gantt.git",
+        "key": null
+    },
+    "GCBO": {
+        "url": "https://github.com/stefanSchinkel/gcbo.git",
+        "key": null
+    }
+}
