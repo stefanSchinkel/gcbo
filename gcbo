@@ -27,7 +27,10 @@ def browse_repos(repos: list) -> str:
     """CLI to select and browse repos"""
     menu_items = list(repos.keys())
     idx = menu("Select repo to browse", menu_items)
-    return repos[menu_items[idx]]["url"]
+    if idx < 0:
+        return None
+    else:
+        return repos[menu_items[idx]]["url"]
 
 def list_branches(repo: str) -> str:
     """List all branches of a remote repo"""
@@ -55,31 +58,41 @@ def get_dir() -> str:
 
 def menu(title: str, options: list) -> str:
     """Simple menu"""
-    s = f"{title}\n"
-    for idx, option in enumerate(options):
-        s += f"{idx} : {option}\n"
+    # add padding and copy to not pass the ref
+    opts= options[:]
+    opts.insert(0,"")
 
+    s = f"{title}\n"
+    for idx, option in enumerate(opts[1:]):
+        s += f"{idx+1} : {option}\n"
+
+    print(chr(27) + "[2J")
     print(s)
 
     choice = None
-    while choice is None or choice not in range(len(options)):
-        choice = int(input("Please make a choice: "))
+    while choice is None or choice not in range(len(opts)):
+        choice = int(input("Please make a choice or press 0 exit: "))
 
-    return choice
+    # decrement to compensate for padding
+    return choice - 1
 
 def main() -> None:
     """main wrapper"""
     repos = read_cfg()
     repo = browse_repos(repos)
-    branch = list_branches(repo)
-    target = get_dir()
-    logger.debug(f"Will clone branch {branch} from {repo} to {target}")
+    logging.debug(f"Repo is >{repo}")
+    if repo is None:
+        exit("Ok, see you.")
 
-    # clone in subprocess
-    cmd = ["git", "clone", "-b", branch, "--single-branch", repo, target]
-    p = subprocess.Popen(cmd)
-    logger.info("Cloning.....")
-    res = p.communicate()
+    # branch = list_branches(repo)
+    # target = get_dir()
+    # logger.debug(f"Will clone branch {branch} from {repo} to {target}")
+
+    # # clone in subprocess
+    # cmd = ["git", "clone", "-b", branch, "--single-branch", repo, target]
+    # p = subprocess.Popen(cmd)
+    # logger.info("Cloning.....")
+    # res = p.communicate()
 
 
 
