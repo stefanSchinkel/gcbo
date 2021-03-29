@@ -75,8 +75,12 @@ def menu(title: str, options: list) -> str:
 
 def main() -> None:
     """main wrapper"""
-    repos = read_cfg()
-    repo = browse_repos(repos)
+    if len(sys.argv) > 1:
+        repo = sys.argv[1]
+    else:
+        repos = read_cfg()
+        repo = browse_repos(repos)
+
     branch = list_branches(repo)
     target = get_dir()
     logger.debug(f"Will clone branch {branch} from {repo} to {target}")

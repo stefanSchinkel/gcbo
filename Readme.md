@@ -31,7 +31,7 @@ Only one to keep track of the repos locate in `${HOME}/.gcbo.json`. See [the sam
 ## Todo
 Things that need to be done, not necessarily in order
 
-- [ ] repo per arg
+- [x] repo per arg
 - [ ] save repo passed per arg
 - [ ] add repo when no config and none given as arg
 - [x] sighandler for <kbd>Ctrl</kbd>+<kbd>c</kbd>
