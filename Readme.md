@@ -34,7 +34,7 @@ Things that need to be done, not necessarily in order
 - [ ] repo per arg
 - [ ] save repo passed per arg
 - [ ] add repo when no config and none given as arg
-- [ ] sighandler for <kbd>Ctrl</kbd>+<kbd>c</kbd>
+- [x] sighandler for <kbd>Ctrl</kbd>+<kbd>c</kbd>
 - [ ] "Go back" in menus
 - [ ] honour ssh key 
 - [ ] pass ssh key via -i option
