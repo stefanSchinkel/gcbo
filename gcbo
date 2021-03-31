@@ -17,6 +17,30 @@ def _term_hdl(signalNumber, frame):
     print ("CTRL+C pressed. Exiting.")
     sys.exit()
 
+class RepoManager:
+    """Class in charge of managing repos in config file"""
+
+    def __init__(self, repo: str = None, key: str = None, cfg: os.path  = CFG):
+        """Constructor w/ default config"""
+        self.repo = repo
+        self.key = key
+        self.cfg = cfg
+        self.repos : list = []
+        self.has_cfg : bool
+
+        if repo is not None:
+            self.repo = repo
+
+        try:
+            with open(self.cfg) as cfg:
+                self.repos = json.load(cfg)
+                self.has_cfg = True
+        except FileNotFoundError:
+            self.has_cfg = False
+
+        if len(self.repos) == 0:
+            logger.debug("no repos defined yet")
+
 def read_cfg() -> list:
     """ config reader"""
     # logger.debug(f"reading cfg {CFG}")
@@ -75,21 +99,23 @@ def menu(title: str, options: list) -> str:
 
 def main() -> None:
     """main wrapper"""
-    if len(sys.argv) > 1:
-        repo = sys.argv[1]
-    else:
-        repos = read_cfg()
-        repo = browse_repos(repos)
+    rm = RepoManager()
 
-    branch = list_branches(repo)
-    target = get_dir()
-    logger.debug(f"Will clone branch {branch} from {repo} to {target}")
+    # if len(sys.argv) > 1:
+    #     repo = sys.argv[1]
+    # else:
+    #     repos = read_cfg()
+    #     repo = browse_repos(repos)
 
-    # clone in subprocess
-    cmd = ["git", "clone", "-b", branch, "--single-branch", repo, target]
-    p = subprocess.Popen(cmd)
-    logger.info("Cloning.....")
-    res = p.communicate()
+    # branch = list_branches(repo)
+    # target = get_dir()
+    # logger.debug(f"Will clone branch {branch} from {repo} to {target}")
+
+    # # clone in subprocess
+    # cmd = ["git", "clone", "-b", branch, "--single-branch", repo, target]
+    # p = subprocess.Popen(cmd)
+    # logger.info("Cloning.....")
+    # res = p.communicate()
 
 
 
