@@ -7,8 +7,8 @@ python:
 
 # tox is used to run all test
 install:
-  - pip install tox
+  - pip install pytest
 
 # command to run tests
 script:
-  - tox
+  - pytest test/
