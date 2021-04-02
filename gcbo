@@ -25,7 +25,7 @@ class RepoManager:
         self.repo = repo
         self.key = key
         self.cfg = cfg
-        self.repos : list = []
+        self.repos : dict = {}
         self.has_cfg : bool
 
         if repo is not None:
@@ -41,23 +41,47 @@ class RepoManager:
         if len(self.repos) == 0:
             logger.debug("no repos defined yet")
 
-def read_cfg() -> list:
-    """ config reader"""
-    # logger.debug(f"reading cfg {CFG}")
-    try:
-        with open(CFG) as cfg:
-            repos = json.load(cfg)
-            return repos
+        # check if repo is new:
+        for r in self.repos.keys():
+            print(f"Repo -> {self.repos[r]['url']}")
 
-    except FileNotFoundError:
-        logger.debug("No repos configured yet. Exiting")
-        exit(0)
+    def select(self) -> str:
+        """Render the menu to select"""
+        # short circuit if repo passed as arg
+        if self.repo:
+            return self.repo
 
-def browse_repos(repos: list) -> str:
-    """CLI to select and browse repos"""
-    menu_items = list(repos.keys())
-    idx = menu("Select repo to browse", menu_items)
-    return repos[menu_items[idx]]["url"]
+        """CLI to select and browse repos"""
+        menu_items = list(self.repos.keys())
+        idx = menu("Select repo to browse", menu_items)
+        return self.repos[menu_items[idx]]["url"]
+
+
+    def save(self, repo_name: str) -> None:
+        """save repo passed as arg"""
+        self.repos["repo_name"] = {"url": self.repo, "key": None}
+        with open(self.cfg, "w") as fh:
+            json.dump(self.repos, fh)
+        logger.debug("print saved")
+
+
+# def read_cfg() -> list:
+#     """ config reader"""
+#     # logger.debug(f"reading cfg {CFG}")
+#     try:
+#         with open(CFG) as cfg:
+#             repos = json.load(cfg)
+#             return repos
+
+#     except FileNotFoundError:
+#         logger.debug("No repos configured yet. Exiting")
+#         exit(0)
+
+# def browse_repos(repos: list) -> str:
+#     """CLI to select and browse repos"""
+#     menu_items = list(repos.keys())
+#     idx = menu("Select repo to browse", menu_items)
+#     return repos[menu_items[idx]]["url"]
 
 def list_branches(repo: str) -> str:
     """List all branches of a remote repo"""
@@ -100,7 +124,8 @@ def menu(title: str, options: list) -> str:
 def main() -> None:
     """main wrapper"""
     rm = RepoManager()
-
+    repo = rm.select()
+    logger.debug(f"selected {repo}")
     # if len(sys.argv) > 1:
     #     repo = sys.argv[1]
     # else:
