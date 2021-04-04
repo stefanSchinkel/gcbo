@@ -17,23 +17,61 @@ def _term_hdl(signalNumber, frame):
     print ("CTRL+C pressed. Exiting.")
     sys.exit()
 
-def read_cfg() -> list:
-    """ config reader"""
-    # logger.debug(f"reading cfg {CFG}")
-    try:
-        with open(CFG) as cfg:
-            repos = json.load(cfg)
-            return repos
+class RepoManager:
+    """Class in charge of managing repos in config file"""
 
-    except FileNotFoundError:
-        logger.debug("No repos configured yet. Exiting")
-        exit(0)
+    def __init__(self, repo: str = None, key: str = None, cfg: os.path  = CFG):
+        """Constructor w/ default config"""
+        self.repo = repo
+        self.key = key
+        self.cfg = cfg
+        self.repos : dict = {}
+        self.has_cfg : bool
 
-def browse_repos(repos: list) -> str:
-    """CLI to select and browse repos"""
-    menu_items = list(repos.keys())
-    idx = menu("Select repo to browse", menu_items)
-    return repos[menu_items[idx]]["url"]
+        if repo is not None:
+            self.repo = repo
+
+        try:
+            with open(self.cfg) as cfg:
+                self.repos = json.load(cfg)
+                self.has_cfg = True
+        except FileNotFoundError:
+            self.has_cfg = False
+
+
+    def select(self) -> str:
+        """Render the menu to select"""
+        # short circuit if repo passed as arg
+        if self.repo:
+            return self.repo
+
+        """CLI to select and browse repos"""
+        menu_items = list(self.repos.keys())
+        idx = menu("Select repo to browse", menu_items)
+        return self.repos[menu_items[idx]]["url"]
+
+
+    def save(self, repo_name: str) -> None:
+        """save repo passed as arg"""
+        self.repos[repo_name] = {"url": self.repo, "key": None}
+        with open(self.cfg, "w") as fh:
+            json.dump(self.repos, fh)
+
+    def __del__(self):
+        """Destructor, triggers save iff needed.
+        """
+        # check if repo is new:
+        if self.repo is None:
+            return
+
+        # check if repo known
+        if self.repo in  [ x['url'] for x in self.repos.values() ]:
+            return
+
+        # query for name
+        name = input("Save this repo? Enter name or leave blank to not save.\n>")
+        if len(name) > 0:
+            self.save(name)
 
 def list_branches(repo: str) -> str:
     """List all branches of a remote repo"""
@@ -76,10 +114,12 @@ def menu(title: str, options: list) -> str:
 def main() -> None:
     """main wrapper"""
     if len(sys.argv) > 1:
-        repo = sys.argv[1]
+        rm = RepoManager(sys.argv[1])
     else:
-        repos = read_cfg()
-        repo = browse_repos(repos)
+        rm = RepoManager()
+
+    repo = rm.select()
+    logger.debug(f"selected {repo}")
 
     branch = list_branches(repo)
     target = get_dir()
