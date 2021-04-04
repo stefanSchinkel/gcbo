@@ -38,12 +38,6 @@ class RepoManager:
         except FileNotFoundError:
             self.has_cfg = False
 
-        if len(self.repos) == 0:
-            logger.debug("no repos defined yet")
-
-        # check if repo is new:
-        for r in self.repos.keys():
-            print(f"Repo -> {self.repos[r]['url']}")
 
     def select(self) -> str:
         """Render the menu to select"""
@@ -59,29 +53,25 @@ class RepoManager:
 
     def save(self, repo_name: str) -> None:
         """save repo passed as arg"""
-        self.repos["repo_name"] = {"url": self.repo, "key": None}
+        self.repos[repo_name] = {"url": self.repo, "key": None}
         with open(self.cfg, "w") as fh:
             json.dump(self.repos, fh)
-        logger.debug("print saved")
 
+    def __del__(self):
+        """Destructor, triggers save iff needed.
+        """
+        # check if repo is new:
+        if self.repo is None:
+            return
 
-# def read_cfg() -> list:
-#     """ config reader"""
-#     # logger.debug(f"reading cfg {CFG}")
-#     try:
-#         with open(CFG) as cfg:
-#             repos = json.load(cfg)
-#             return repos
+        # check if repo known
+        if self.repo in  [ x['url'] for x in self.repos.values() ]:
+            return
 
-#     except FileNotFoundError:
-#         logger.debug("No repos configured yet. Exiting")
-#         exit(0)
-
-# def browse_repos(repos: list) -> str:
-#     """CLI to select and browse repos"""
-#     menu_items = list(repos.keys())
-#     idx = menu("Select repo to browse", menu_items)
-#     return repos[menu_items[idx]]["url"]
+        # query for name
+        name = input("Save this repo? Enter name or leave blank to not save.\n>")
+        if len(name) > 0:
+            self.save(name)
 
 def list_branches(repo: str) -> str:
     """List all branches of a remote repo"""
@@ -123,24 +113,23 @@ def menu(title: str, options: list) -> str:
 
 def main() -> None:
     """main wrapper"""
-    rm = RepoManager()
+    if len(sys.argv) > 1:
+        rm = RepoManager(sys.argv[1])
+    else:
+        rm = RepoManager()
+
     repo = rm.select()
     logger.debug(f"selected {repo}")
-    # if len(sys.argv) > 1:
-    #     repo = sys.argv[1]
-    # else:
-    #     repos = read_cfg()
-    #     repo = browse_repos(repos)
 
-    # branch = list_branches(repo)
-    # target = get_dir()
-    # logger.debug(f"Will clone branch {branch} from {repo} to {target}")
+    branch = list_branches(repo)
+    target = get_dir()
+    logger.debug(f"Will clone branch {branch} from {repo} to {target}")
 
-    # # clone in subprocess
-    # cmd = ["git", "clone", "-b", branch, "--single-branch", repo, target]
-    # p = subprocess.Popen(cmd)
-    # logger.info("Cloning.....")
-    # res = p.communicate()
+    # clone in subprocess
+    cmd = ["git", "clone", "-b", branch, "--single-branch", repo, target]
+    p = subprocess.Popen(cmd)
+    logger.info("Cloning.....")
+    res = p.communicate()
 
 
 
